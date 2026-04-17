@@ -2,5 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Leaflet — must be global so it covers the dynamically-loaded map component */
+@import "leaflet/dist/leaflet.css";
+
 html, body { height: 100%; }
 body { font-family: ui-sans-serif, system-ui, sans-serif; }
+
+/* Dual-handle year range slider */
+.dual-range-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+}
+.dual-range-input::-webkit-slider-runnable-track { background: transparent; height: 6px; }
+.dual-range-input::-moz-range-track             { background: transparent; height: 6px; }
+.dual-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #3b82f6;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  pointer-events: all;
+  cursor: pointer;
+  margin-top: -6px;
+}
+.dual-range-input::-moz-range-thumb {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #3b82f6;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  pointer-events: all;
+  cursor: pointer;
+}
+
+/* Nicer Leaflet popup chrome */
+.leaflet-popup-content-wrapper {
+  border-radius: 10px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+  padding: 0 !important;
+}
+.leaflet-popup-content {
+  margin: 12px 14px !important;
+  line-height: 1.4 !important;
+}

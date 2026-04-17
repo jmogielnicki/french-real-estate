@@ -8,7 +8,11 @@ const nextConfig = {
         source: "/(.*)",
         headers: [
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+          // "credentialless" still enables cross-origin isolation (needed for
+          // SharedArrayBuffer / DuckDB-WASM) but lets the browser fetch
+          // cross-origin resources (e.g. OSM tile servers) that don't set a
+          // Cross-Origin-Resource-Policy header — which "require-corp" blocks.
+          { key: "Cross-Origin-Embedder-Policy", value: "credentialless" },
         ],
       },
     ];
