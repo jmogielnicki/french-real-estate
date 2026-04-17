@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Dashboard from "@/components/Dashboard";
 
 export default function Home() {
@@ -12,7 +13,10 @@ export default function Home() {
         </p>
       </header>
 
-      <Dashboard />
+      {/* Suspense required for useSearchParams in Dashboard */}
+      <Suspense fallback={<div className="text-slate-400 text-sm py-8">Loading…</div>}>
+        <Dashboard />
+      </Suspense>
 
       <footer className="text-xs text-slate-400 pt-4">
         Data: DVF+ from Etalab. Filtered to residential sales (≥1 Maison or

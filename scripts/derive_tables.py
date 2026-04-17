@@ -58,6 +58,9 @@ def main() -> None:
           ),
 
           -- Step 2: per-sale building metrics from deduplicated rows.
+          -- `buildings` preserves the per-building detail (type + area + rooms)
+          -- that the flat aggregates lose.  It's a LIST(STRUCT) so DuckDB can
+          -- UNNEST it for building-level analytics without a second table.
           building_agg AS (
             SELECT
               id_mutation,
@@ -66,7 +69,12 @@ def main() -> None:
               SUM(surface_reelle_bati)               AS built_area_m2,
               SUM(nombre_pieces_principales)::INT    AS rooms_total,
               MIN(nombre_pieces_principales)::INT    AS rooms_min,
-              MAX(nombre_pieces_principales)::INT    AS rooms_max
+              MAX(nombre_pieces_principales)::INT    AS rooms_max,
+              LIST({{
+                'type':    type_local,
+                'area_m2': surface_reelle_bati::INT,
+                'rooms':   nombre_pieces_principales::INT
+              }} ORDER BY type_local, surface_reelle_bati DESC) AS buildings
             FROM deduped_buildings
             GROUP BY id_mutation
           ),
@@ -134,6 +142,7 @@ def main() -> None:
               b.rooms_total,
               b.rooms_min,
               b.rooms_max,
+              b.buildings,
               s.land_area_m2,
               s.latitude,
               s.longitude
@@ -147,6 +156,16 @@ def main() -> None:
                  WHEN n_appartements > 0 AND n_maisons = 0 THEN 'Appartement'
                  WHEN n_maisons > 0 AND n_appartements > 0 THEN 'Mixed'
                  ELSE NULL END                                    AS primary_type,
+            -- Short composition key like "1M", "2M", "1M+1A", "2A".
+            -- Useful for split-by and for distinguishing "house + apartment"
+            -- sales from pure multi-house sales.
+            CASE
+              WHEN n_maisons > 0 AND n_appartements > 0
+                THEN CAST(n_maisons AS VARCHAR) || 'M+' || CAST(n_appartements AS VARCHAR) || 'A'
+              WHEN n_maisons > 0      THEN CAST(n_maisons AS VARCHAR)      || 'M'
+              WHEN n_appartements > 0 THEN CAST(n_appartements AS VARCHAR) || 'A'
+              ELSE NULL
+            END                                                   AS composition,
             CASE WHEN built_area_m2 > 10 AND price_eur > 0
                  THEN price_eur / built_area_m2 END               AS price_per_m2
           FROM joined
@@ -190,6 +209,26 @@ def main() -> None:
         WHERE n_maisons BETWEEN 1 AND 5 AND n_appartements = 0
           AND price_per_m2 BETWEEN 100 AND 30000
         GROUP BY n_maisons ORDER BY n_maisons
+    """).df().to_string(index=False))
+
+    print("\nTop 15 compositions:")
+    print(con.execute(f"""
+        SELECT composition,
+               COUNT(*) AS n_sales,
+               ROUND(MEDIAN(price_eur))     AS med_price,
+               ROUND(MEDIAN(price_per_m2))  AS med_eur_per_m2
+        FROM read_parquet('{p}')
+        GROUP BY composition
+        ORDER BY n_sales DESC
+        LIMIT 15
+    """).df().to_string(index=False))
+
+    print("\nSample building detail (mutation 2021-43, if present):")
+    print(con.execute(f"""
+        SELECT id_mutation, composition, buildings
+        FROM read_parquet('{p}')
+        WHERE id_mutation LIKE '2021-43' OR id_mutation LIKE '%2021-43%'
+        LIMIT 3
     """).df().to_string(index=False))
 
     print("\nn_maisons vs n_maison_rows — dedup impact:")

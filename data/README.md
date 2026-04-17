@@ -55,7 +55,22 @@ One row per sale (`id_mutation`), filtered to residential transactions:
 `commune_code`, `commune_name`, `postal_code`, `latitude`, `longitude`,
 `n_maisons` (deduplicated), `n_appartements` (deduplicated), `built_area_m2`,
 `rooms_min`, `rooms_max`, `rooms_total`, `land_area_m2`, `primary_type`,
-`price_per_m2`.
+`composition`, `price_per_m2`, `buildings`.
+
+**`buildings`** is a `LIST(STRUCT(type, area_m2, rooms))` — one entry per
+distinct physical building, preserving the pairing between area and rooms
+that the flat aggregates lose. Use `UNNEST(buildings)` for building-level
+analytics:
+
+```sql
+SELECT (b).type, COUNT(*), ROUND(AVG((b).area_m2))
+FROM sales, UNNEST(buildings) AS t(b)
+GROUP BY 1;
+```
+
+**`composition`** is a compact string like `"1M"`, `"2M"`, `"1M+1A"`, `"2A"`
+that distinguishes e.g. "house + apartment" sales from pure multi-house
+sales. Useful for split-by in charts.
 
 **Deduplication note:** `n_maisons` and `built_area_m2` are computed from
 `DISTINCT (surface_reelle_bati, nombre_pieces_principales)` pairs per sale.

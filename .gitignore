@@ -4,6 +4,10 @@ __pycache__/
 .ipynb_checkpoints/
 .DS_Store
 
+# Next.js build artifacts
+web/.next/
+web/tsconfig.tsbuildinfo
+
 # Data: large, downloadable, or regeneratable — never commit
 data/*.txt
 data/dvf_plus/
