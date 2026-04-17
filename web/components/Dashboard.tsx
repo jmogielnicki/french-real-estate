@@ -7,6 +7,7 @@ import TrendChart from "@/components/TrendChart";
 import PropertiesPanel from "@/components/PropertiesPanel";
 import MapPanel from "@/components/MapPanel";
 import SaleLookup from "@/components/SaleLookup";
+import SummaryStats from "@/components/SummaryStats";
 import {
   DEFAULT_FILTERS,
   type Bbox,
@@ -200,6 +201,7 @@ export default function Dashboard() {
               onSplitByChange={setSplitBy}
             />
             <div className="space-y-4 min-w-0">
+              <SummaryStats filters={filters} bbox={bbox} />
               <MapPanel
                 filters={filters}
                 onBboxChange={handleBboxChange}
