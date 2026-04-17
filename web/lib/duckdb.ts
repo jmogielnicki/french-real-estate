@@ -5,7 +5,10 @@ import * as duckdb from "@duckdb/duckdb-wasm";
 // Singleton: only initialize the database once per page load.
 let dbPromise: Promise<duckdb.AsyncDuckDB> | null = null;
 
-const PARQUET_URL = "/data/sales_residential.parquet";
+// In local dev, the parquet is symlinked into public/data/.
+// For production, set NEXT_PUBLIC_PARQUET_URL to the R2/Blob URL.
+const PARQUET_URL =
+  process.env.NEXT_PUBLIC_PARQUET_URL ?? "/data/sales_residential.parquet";
 
 export async function getDB(): Promise<duckdb.AsyncDuckDB> {
   if (dbPromise) return dbPromise;
